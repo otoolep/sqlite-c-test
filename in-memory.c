@@ -43,8 +43,10 @@ int main(void) {
         sqlite3_free(err_msg);        
         return 1;
     }
+    // Start the INSERT thread
     pthread_create(&thread_id, NULL, insertFn, (void*)rwConn);
 
+    // Open a connection for reading.
     rc = sqlite3_open_v2(RO_DSW, &roConn, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(roConn));
@@ -55,6 +57,7 @@ int main(void) {
         return 1;
     }
 
+    // Do a query in a loop, dumping the count every so often.
     int nSuccess = 0;
     for (int i = 0; i<10000000; ++i){
         rc = sqlite3_prepare_v2(roConn, "SELECT * FROM logs", -1, &res, 0);
@@ -80,6 +83,7 @@ int main(void) {
     }
     fprintf(stderr, "Fetched %d times without error\n", nSuccess);
 
+    // Do a final query to ensure all records were inserted.
     pthread_join(thread_id, NULL);
     rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
     if (rc != SQLITE_OK) {
