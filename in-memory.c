@@ -34,7 +34,6 @@ int main(void) {
         sqlite3_free(err_msg);        
         return 1;
     }
-
     pthread_create(&thread_id, NULL, insertFn, (void*)rwConn);
 
     rc = sqlite3_open_v2("file:/mydb?mode=ro&vfs=memdb&_txlock=deferred&_fk=false", &roConn, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL);
