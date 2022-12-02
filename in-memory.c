@@ -3,6 +3,9 @@
 #include <pthread.h>
 #include <sqlite3.h>
 
+#define RW_DSN "file:/mydb?mode=rw&vfs=memdb&_txlock=immediate&_fk=false"
+#define RO_DSW "file:/mydb?mode=ro&vfs=memdb&_txlock=deferred&_fk=false"
+
 void* insertFn(void *arg) {
     char *err_msg = 0;
     int rc = 0;
@@ -24,7 +27,7 @@ int main(void) {
     sqlite3_stmt *res;
     pthread_t thread_id;
 
-    rc = sqlite3_open_v2("file:/mydb?mode=rw&vfs=memdb&_txlock=immediate&_fk=false", &rwConn, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_URI, NULL);
+    rc = sqlite3_open_v2(RW_DSN, &rwConn, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_URI, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(rwConn));
     }
@@ -36,7 +39,7 @@ int main(void) {
     }
     pthread_create(&thread_id, NULL, insertFn, (void*)rwConn);
 
-    rc = sqlite3_open_v2("file:/mydb?mode=ro&vfs=memdb&_txlock=deferred&_fk=false", &roConn, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL);
+    rc = sqlite3_open_v2(RO_DSW, &roConn, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(roConn));
     }   
