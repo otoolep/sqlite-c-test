@@ -1,4 +1,5 @@
 /* Compile via 'gcc in-memory.c -pthread -l sqlite3' */
+
 #include <stdio.h>
 #include <pthread.h>
 #include <sqlite3.h>
@@ -18,7 +19,6 @@ void* insertFn(void *arg) {
     }
 }
 
-/* Compile via 'gcc open-in-mem.c -l sqlite3' */
 int main(void) {
     sqlite3 *rwConn;
     sqlite3 *roConn;
@@ -45,7 +45,6 @@ int main(void) {
     }   
     rc = sqlite3_prepare_v2(roConn, "SELECT * FROM logs", -1, &res, 0);    
     if (rc != SQLITE_OK) {
-        
         fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(roConn));
         return 1;
     }
