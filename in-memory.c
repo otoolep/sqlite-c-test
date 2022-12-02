@@ -11,7 +11,7 @@ void* insertFn(void *arg) {
     char *err_msg = 0;
     int rc = 0;
     sqlite3 *conn = (sqlite3*)arg;
-    while(1) {
+    for (int i = 0; i<10000000; ++i) {
         rc = sqlite3_exec(conn, "INSERT INTO logs(entry) VALUES('hello')", 0, 0, &err_msg);
         if (rc != SQLITE_OK) {
             fprintf(stderr, "SQL error: %s\n", err_msg);
@@ -37,20 +37,58 @@ int main(void) {
         sqlite3_free(err_msg);        
         return 1;
     }
+    rc = sqlite3_exec(rwConn, "PRAGMA busy_timeout = 5000", 0, 0, &err_msg);
+     if (rc != SQLITE_OK) {  
+        fprintf(stderr, "SQL error setting busy timeout on RW connection: %s\n", err_msg);
+        sqlite3_free(err_msg);        
+        return 1;
+    }
     pthread_create(&thread_id, NULL, insertFn, (void*)rwConn);
 
     rc = sqlite3_open_v2(RO_DSW, &roConn, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(roConn));
-    }   
-    rc = sqlite3_prepare_v2(roConn, "SELECT * FROM logs", -1, &res, 0);    
+    }
+    rc = sqlite3_prepare_v2(roConn, "PRAGMA busy_timeout = 5000", -1, &res, 0);    
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL error setting busy timeout on RO connection: %s\n", sqlite3_errmsg(roConn));
+        return 1;
+    }
+
+    int nSuccess = 0;
+    for (int i = 0; i<10000000; ++i){
+        rc = sqlite3_prepare_v2(roConn, "SELECT * FROM logs", -1, &res, 0);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(roConn));
+            return 1;
+        }
+        sqlite3_finalize(res);
+
+        if (i % 1000000 == 0) {
+            rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(roConn));
+                return 1;
+            }
+            rc = sqlite3_step(res);
+            if (rc == SQLITE_ROW) {
+                printf("Count during loop is: %s\n", sqlite3_column_text(res, 0));
+            }
+            sqlite3_finalize(res);
+        }
+        nSuccess++;
+    }
+    fprintf(stderr, "Fetched %d times without error\n", nSuccess);
+
+    pthread_join(thread_id, NULL);
+    rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(roConn));
         return 1;
     }
     rc = sqlite3_step(res);
     if (rc == SQLITE_ROW) {
-        printf("%s\n", sqlite3_column_text(res, 0));
+        printf("Count is: %s\n", sqlite3_column_text(res, 0));
     }
     sqlite3_finalize(res);
 
