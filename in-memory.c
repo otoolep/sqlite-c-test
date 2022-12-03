@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <sqlite3.h>
 
-#define RW_DSN "file:/mydb?mode=rw&vfs=memdb&_txlock=immediate&_fk=false"
-#define RO_DSW "file:/mydb?mode=ro&vfs=memdb&_txlock=deferred&_fk=false"
+#define RW_DSN "file:/mydb?mode=rw&vfs=memdb"
+#define RO_DSW "file:/mydb?mode=ro&vfs=memdb"
 
 void* insertFn(void *arg) {
     char *err_msg = 0;
@@ -60,25 +60,25 @@ int main(void) {
     // Do a query in a loop, dumping the count every so often.
     int nSuccess = 0;
     for (int i = 0; i<10000000; ++i){
-        rc = sqlite3_prepare_v2(roConn, "SELECT * FROM logs", -1, &res, 0);
+        rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
         if (rc != SQLITE_OK) {
             fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(roConn));
             return 1;
         }
-        sqlite3_finalize(res);
 
-        if (i % 1000000 == 0) {
-            rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
-            if (rc != SQLITE_OK) {
-                fprintf(stderr, "Failed to fetch data: %s\n", sqlite3_errmsg(roConn));
-                return 1;
-            }
+        while (1) {
             rc = sqlite3_step(res);
             if (rc == SQLITE_ROW) {
-                printf("Count during loop is: %s\n", sqlite3_column_text(res, 0));
+                continue;
             }
-            sqlite3_finalize(res);
+            if (rc == SQLITE_DONE) {
+                break;
+            }
+            fprintf(stderr, "Failed to step data: %s\n", sqlite3_errmsg(roConn));
+            return 1;
         }
+
+        sqlite3_finalize(res);
         nSuccess++;
     }
     fprintf(stderr, "Fetched %d times without error\n", nSuccess);
