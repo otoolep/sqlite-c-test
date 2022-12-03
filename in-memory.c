@@ -27,6 +27,8 @@ int main(void) {
     sqlite3_stmt *res;
     pthread_t thread_id;
 
+    printf("Running SQLite version %s\n", sqlite3_libversion());
+
     rc = sqlite3_open_v2(RW_DSN, &rwConn, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_URI, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(rwConn));
