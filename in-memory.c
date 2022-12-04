@@ -15,6 +15,7 @@ Compile via:
 #define RW_DSN "file:/mydb?mode=rw&vfs=memdb"
 #define RO_DSW "file:/mydb?mode=ro&vfs=memdb"
 
+// insertFn() inserts records into a simple table. 
 void* insertFn(void *arg) {
     char *err_msg = 0;
     int rc = 0;
