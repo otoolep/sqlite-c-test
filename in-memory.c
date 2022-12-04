@@ -15,7 +15,7 @@ Compile via:
 #define RW_DSN "file:/mydb?mode=rw&vfs=memdb"
 #define RO_DSW "file:/mydb?mode=ro&vfs=memdb"
 
-// insertFn() inserts records into a simple table. 
+// insertFn() inserts records into a simple table.
 void* insertFn(void *arg) {
     char *err_msg = 0;
     int rc = 0;
@@ -71,7 +71,7 @@ int main(void) {
         return 1;
     }
 
-    // Do a query in a loop, dumping the count every so often. Exit if error.
+    // Do a query in a loop. Exit if error.
     int nSuccess = 0;
     for (int i = 0; i<10000000; ++i){
         rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
