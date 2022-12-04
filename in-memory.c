@@ -28,7 +28,9 @@ int main(void) {
     pthread_t thread_id;
 
     printf("Running SQLite version %s\n", sqlite3_libversion());
+    printf("THREADSAFE=%d\n", sqlite3_threadsafe());
 
+    // Create the database, a simple table, and set the busy timeout.
     rc = sqlite3_open_v2(RW_DSN, &rwConn, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_URI, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(rwConn));
@@ -45,10 +47,11 @@ int main(void) {
         sqlite3_free(err_msg);        
         return 1;
     }
-    // Start the INSERT thread
+
+    // Start the INSERT thread.
     pthread_create(&thread_id, NULL, insertFn, (void*)rwConn);
 
-    // Open a connection for reading.
+    // Open a read-only connection for reading the database.
     rc = sqlite3_open_v2(RO_DSW, &roConn, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, NULL);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(roConn));
@@ -59,7 +62,7 @@ int main(void) {
         return 1;
     }
 
-    // Do a query in a loop, dumping the count every so often.
+    // Do a query in a loop, dumping the count every so often. Exit if error.
     int nSuccess = 0;
     for (int i = 0; i<10000000; ++i){
         rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
@@ -85,7 +88,7 @@ int main(void) {
     }
     fprintf(stderr, "Fetched %d times without error\n", nSuccess);
 
-    // Do a final query to ensure all records were inserted.
+    // Do a final query to confirm all records were inserted.
     pthread_join(thread_id, NULL);
     rc = sqlite3_prepare_v2(roConn, "SELECT COUNT(*) FROM logs", -1, &res, 0);
     if (rc != SQLITE_OK) {
