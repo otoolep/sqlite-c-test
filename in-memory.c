@@ -64,7 +64,7 @@ int main(void) {
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Can't open execute connection: %s\n", sqlite3_errmsg(roConn));
     }
-    rc = sqlite3_prepare_v2(roConn, "PRAGMA busy_timeout = 5000", -1, &res, 0);    
+    rc = sqlite3_exec(roConn, "PRAGMA busy_timeout = 5000", 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error setting busy timeout on RO connection: %s\n", sqlite3_errmsg(roConn));
         return 1;
