@@ -1,4 +1,12 @@
-/* Compile via 'gcc in-memory.c -pthread -l sqlite3' */
+/*
+
+Simple C program which fails to query records.
+
+Compile via:
+
+    gcc in-memory.c -pthread -l sqlite3
+
+*/
 
 #include <stdio.h>
 #include <pthread.h>
