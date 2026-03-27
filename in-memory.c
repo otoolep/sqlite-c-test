@@ -1,6 +1,7 @@
 /*
 
-Simple C program which fails to query records.
+Simple C program which fails to query records. This was due to a bug in SQLite
+later fixed by the SQLite dev team. See https://sqlite.org/forum/forumpost/5adb92e2baca3678
 
 Compile via:
 
